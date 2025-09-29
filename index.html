@@ -653,6 +653,7 @@
                 <li><a href="#home">Home</a></li>
                 <li><a href="#services">Servizi</a></li>
                 <li><a href="#about">Chi Siamo</a></li>
+                <li><a href="#portfolio">Portfolio</a></li>
                 <li><a href="#contact">Contatti</a></li>
             </ul>
         </nav>
@@ -750,6 +751,27 @@
         </div>
     </section>
 
+    <!-- Portfolio Section -->
+    <section id="portfolio" class="portfolio-section">
+        <div class="container">
+            <h2 class="section-title animate-on-scroll">Portfolio</h2>
+            <p class="animate-on-scroll" style="text-align:center; color: rgba(255,255,255,0.8); max-width:800px; margin: 0 auto 2rem;">Dai un'occhiata ai nostri progetti e case study — clicca il pulsante qui sotto per aprire il documento completo del portfolio.</p>
+
+            <div class="portfolio-grid animate-on-scroll" style="display:flex; justify-content:center; gap:1.5rem; flex-wrap:wrap;">
+                <div class="service-card" style="max-width:900px;">
+                    <div style="font-size:3rem; margin-bottom:1rem;">📁</div>
+                    <h3>Progetti Selezionati</h3>
+                    <p style="color: rgba(255,255,255,0.75); line-height:1.7;">Una raccolta curata dei nostri lavori migliori: web app, e-commerce, design e soluzioni custom. Il documento contiene descrizioni, tecnologie usate e risultati ottenuti.</p>
+                    <div style="margin-top:1.5rem; display:flex; gap:1rem; justify-content:center;">
+                        <a href="https://docs.google.com/document/d/1vdlDxvAXn5msxvCh-slRrPXGQHM2XwluKxdQuRzN7js/edit?tab=t.0" target="_blank" rel="noopener noreferrer" class="cta-button" aria-label="Apri portfolio in Google Docs">
+                            📄 Visualizza Portfolio
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Social Section -->
     <section id="contact" class="social-section">
         <div class="container">
@@ -776,6 +798,9 @@
             <p>&copy; 2025 GFC Shop - Crafted with 💜 and ⚡ | Full-Stack Development • Creative Design • IT Support • Digital Strategy</p>
         </div>
     </footer>
+
+    <!-- Back to top button -->
+    <button id="backToTop" aria-label="Torna su" title="Torna su">⬆</button>
 
     <script>
         // Create floating particles
@@ -855,6 +880,60 @@
             const opacity = Math.min(0.95, 0.8 + (scrolled / 500) * 0.15);
             header.style.background = `rgba(15, 15, 35, ${opacity})`;
         });
+
+        // Back to top button logic
+        (function() {
+            const btn = document.getElementById('backToTop');
+
+            // Create basic styles dynamically to keep patch small
+            const style = document.createElement('style');
+            style.innerHTML = `
+                #backToTop {
+                    position: fixed;
+                    right: 24px;
+                    bottom: 24px;
+                    width: 48px;
+                    height: 48px;
+                    border-radius: 12px;
+                    border: none;
+                    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+                    color: #fff;
+                    font-size: 20px;
+                    box-shadow: 0 8px 24px rgba(99,102,241,0.3);
+                    cursor: pointer;
+                    opacity: 0;
+                    transform: translateY(20px);
+                    transition: opacity 0.3s ease, transform 0.3s ease;
+                    z-index: 1500;
+                }
+                #backToTop.show {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+                @media (max-width: 480px) {
+                    #backToTop { right: 16px; bottom: 16px; width:44px; height:44px; }
+                }
+            `;
+            document.head.appendChild(style);
+
+            // Show after scrolling down 300px
+            function checkScroll() {
+                if (window.pageYOffset > 300) {
+                    btn.classList.add('show');
+                } else {
+                    btn.classList.remove('show');
+                }
+            }
+
+            // Smooth scroll to top
+            btn.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
+            window.addEventListener('scroll', checkScroll);
+            // initial check
+            checkScroll();
+        })();
     </script>
 </body>
 </html>
