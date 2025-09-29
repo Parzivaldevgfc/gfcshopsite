@@ -610,6 +610,51 @@
             transform: translateY(0);
         }
 
+        /* Preloader styles */
+        #preloader {
+             position: fixed;
+             z-index: 3000;
+             inset: 0;
+             background: #0f0f23;
+             color: #8b5cf6;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             transition: opacity 0.45s ease;
+             font-family: 'Fira Mono', 'Consolas', monospace;
+             font-size: 1.1rem;
+             letter-spacing: 1px;
+             padding: 0 16px; /* aggiunto padding per evitare overflow */
+         }
+        #preloader pre {
+             margin: 0;
+             text-align: center;
+             user-select: none;
+             white-space: pre-wrap; /* permette il wrapping */
+             word-break: break-all;
+         }
+        /* Terminal-like lines inside preloader */
+        .pre-line { display:block; text-align:left; margin:2px 0; white-space:pre-wrap; }
+        .pre-line .cmd { color:#4ade80; font-weight:600; }
+        .pre-line .out { color: rgba(255,255,255,0.78); font-weight:400; margin-left:8px; display:inline-block; }
+        #preloader-text { font-size:1rem; line-height:1.25; color:#9ae6b4; }
+        .pre-caret { display:inline-block; margin-left:6px; color:#9ae6b4; animation: blinkCaret 650ms steps(1) infinite; }
+ 
+         /* Responsive preloader ASCII */
+         @media (max-width: 600px) {
+             #preloader pre {
+                 font-size: 0.75rem;
+                 line-height: 1.1;
+                 white-space: pre-line; /* forza il wrapping sulle linee */
+             }
+         }
+        @media (max-width: 400px) {
+            #preloader pre {
+                font-size: 0.62rem;
+                line-height: 1.05;
+            }
+        }
+
         /* Glitch effect for logo */
         .glitch {
             position: relative;
@@ -636,9 +681,13 @@
     </style>
 </head>
 <body>
+        <!-- Preloader ASCII by parzival -->
+    <div id="preloader" aria-live="polite" aria-label="Caricamento">
+        <!-- preloader-inner contiene il testo; il caret è un elemento separato per non essere sovrascritto -->
+        <pre id="preloader-text" style="font-size:1.05rem;"><span id="preloader-inner"></span></pre>
+    </div>
     <!-- Animated Background -->
     <div class="bg-animation"></div>
-    
     <!-- Particles -->
     <div class="particles" id="particles"></div>
 
@@ -803,11 +852,101 @@
     <button id="backToTop" aria-label="Torna su" title="Torna su">⬆</button>
 
     <script>
+            
+         // preloader: terminal-like sequence (più veloce)
+    (function(){
+        const preEl = document.getElementById('preloader');
+        const container = document.getElementById('preloader-inner');
+        // caret element
+        const caret = document.createElement('span');
+        caret.className = 'pre-caret';
+        caret.setAttribute('aria-hidden','true');
+        caret.textContent = '|';
+        // keyframes (ensure exists)
+        const css = document.createElement('style');
+        css.textContent = `@keyframes blinkCaret { 50% { opacity: 0; } }`;
+        document.head.appendChild(css);
+
+        // helper: type text into a span, returns Promise
+        function typeText(target, text, speed=6){
+            return new Promise(resolve => {
+                let i=0;
+                function step(){
+                    if(i<=text.length){
+                        target.textContent = text.slice(0,i);
+                        i++;
+                        setTimeout(step, speed);
+                    } else resolve();
+                }
+                step();
+            });
+        }
+
+        // sequence of commands + outputs
+        const seq = [
+            {cmd: 'init.sh', out: 'Launching services...'},
+            {cmd: 'git clone gfcshop/core', out: 'Repository cloned.'},
+            {cmd: 'npm ci', out: 'Dependencies installed.'},
+            {cmd: 'npm run build --prod', out: 'Build complete - optimized.'},
+            {cmd: 'connect ui', out: 'UI ready. Enjoy the show!'}
+        ];
+
+        window.addEventListener('load', async function(){
+            // Small ASCII art for GFC Shop (by parzival)
+            const asciiArt = [
+                "",
+                "GFC SHOP by parzival"
+            ].join('');
+            const artLine = document.createElement('div');
+            artLine.className = 'pre-line';
+            const artPre = document.createElement('pre');
+            artPre.style.margin = '0';
+            artPre.style.display = 'inline-block';
+            artPre.textContent = asciiArt;
+            artLine.appendChild(artPre);
+            container.appendChild(artLine);
+
+            for(const item of seq){
+                const line = document.createElement('div');
+                line.className = 'pre-line';
+                const promptSpan = document.createElement('span');
+                promptSpan.className = 'cmd';
+                promptSpan.textContent = 'root@GFC:~$ ';
+                const typedSpan = document.createElement('span');
+                typedSpan.className = 'typed';
+                line.appendChild(promptSpan);
+                line.appendChild(typedSpan);
+                line.appendChild(caret);
+                container.appendChild(line);
+
+                await typeText(typedSpan, item.cmd, 6); // più veloce
+                // small pause
+                await new Promise(r => setTimeout(r, 200));
+                // remove caret from command line
+                caret.remove();
+                // add output line
+                const outLine = document.createElement('div');
+                outLine.className = 'pre-line';
+                outLine.innerHTML = `<span class="out">${item.out}</span>`;
+                container.appendChild(outLine);
+                // reattach caret for next command
+                line.appendChild(caret);
+                await new Promise(r => setTimeout(r, 180)); // breve pausa
+            }
+
+            // rapida dissolvenza
+            setTimeout(()=> {
+                preEl.style.opacity = '0';
+                setTimeout(()=> preEl.style.display = 'none', 350);
+            }, 350);
+        });
+    })();
+
         // Create floating particles
         function createParticles() {
             const particlesContainer = document.getElementById('particles');
+            if (!particlesContainer) return;
             const particleCount = 50;
-
             for (let i = 0; i < particleCount; i++) {
                 const particle = document.createElement('div');
                 particle.className = 'particle';
@@ -815,11 +954,8 @@
                 particle.style.top = Math.random() * 100 + '%';
                 particle.style.animationDelay = Math.random() * 6 + 's';
                 particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
-                
-                // Random colors
                 const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b'];
                 particle.style.background = colors[Math.floor(Math.random() * colors.length)];
-                
                 particlesContainer.appendChild(particle);
             }
         }
@@ -829,53 +965,37 @@
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
         });
 
         // Scroll animations
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -100px 0px'
-        };
-
+        const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -100px 0px' };
         const observer = new IntersectionObserver(function(entries) {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('animated');
-                }
-            });
+            entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('animated'); });
         }, observerOptions);
-
-        document.querySelectorAll('.animate-on-scroll').forEach(el => {
-            observer.observe(el);
-        });
+        document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
 
         // Stagger animations for cards
-        document.querySelectorAll('.service-card').forEach((card, index) => {
-            card.style.transitionDelay = `${index * 0.15}s`;
-        });
+        document.querySelectorAll('.service-card').forEach((card, index) => { card.style.transitionDelay = `${index * 0.15}s`; });
 
         // Initialize particles
         createParticles();
 
-        // Add floating animation to particles
+        // Gentle random movement (non-destructive)
         setInterval(() => {
-            document.querySelectorAll('.particle').forEach(particle => {
+            document.querySelectorAll('.particle').forEach(p => {
                 const randomX = Math.random() * 10 - 5;
                 const randomY = Math.random() * 10 - 5;
-                particle.style.transform += ` translate(${randomX}px, ${randomY}px)`;
+                const prev = p.style.transform || '';
+                p.style.transform = `${prev} translate(${randomX}px, ${randomY}px)`;
             });
         }, 3000);
 
         // Header background opacity on scroll
         window.addEventListener('scroll', () => {
             const header = document.querySelector('header');
+            if (!header) return;
             const scrolled = window.pageYOffset;
             const opacity = Math.min(0.95, 0.8 + (scrolled / 500) * 0.15);
             header.style.background = `rgba(15, 15, 35, ${opacity})`;
@@ -884,54 +1004,18 @@
         // Back to top button logic
         (function() {
             const btn = document.getElementById('backToTop');
-
-            // Create basic styles dynamically to keep patch small
+            if (!btn) return;
             const style = document.createElement('style');
             style.innerHTML = `
-                #backToTop {
-                    position: fixed;
-                    right: 24px;
-                    bottom: 24px;
-                    width: 48px;
-                    height: 48px;
-                    border-radius: 12px;
-                    border: none;
-                    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-                    color: #fff;
-                    font-size: 20px;
-                    box-shadow: 0 8px 24px rgba(99,102,241,0.3);
-                    cursor: pointer;
-                    opacity: 0;
-                    transform: translateY(20px);
-                    transition: opacity 0.3s ease, transform 0.3s ease;
-                    z-index: 1500;
-                }
-                #backToTop.show {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-                @media (max-width: 480px) {
-                    #backToTop { right: 16px; bottom: 16px; width:44px; height:44px; }
-                }
-            `;
+                #backToTop { position: fixed; right: 24px; bottom: 24px; width:48px; height:48px; border-radius:12px; border:none;
+                    background: linear-gradient(135deg, #6366f1, #8b5cf6); color:#fff; font-size:20px; box-shadow:0 8px 24px rgba(99,102,241,0.3);
+                    cursor:pointer; opacity:0; transform:translateY(20px); transition:opacity 0.3s ease, transform 0.3s ease; z-index:1500; }
+                #backToTop.show { opacity:1; transform:translateY(0); }
+                @media (max-width: 480px) { #backToTop { right:16px; bottom:16px; width:44px; height:44px; } }`;
             document.head.appendChild(style);
-
-            // Show after scrolling down 300px
-            function checkScroll() {
-                if (window.pageYOffset > 300) {
-                    btn.classList.add('show');
-                } else {
-                    btn.classList.remove('show');
-                }
-            }
-
-            // Smooth scroll to top
-            btn.addEventListener('click', () => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-
+            function checkScroll() { if (window.pageYOffset > 300) btn.classList.add('show'); else btn.classList.remove('show'); }
+            btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
             window.addEventListener('scroll', checkScroll);
-            // initial check
             checkScroll();
         })();
     </script>
